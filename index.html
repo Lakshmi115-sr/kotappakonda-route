@@ -12,7 +12,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css">
+    <style>
+        .service-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: left;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #e0e0e0;
+        }
+        .service-card:active {
+            background: #2a2a2a;
+            border-color: #fbbf24;
+            color: #fbbf24;
+        }
+    </style>
 </head>
 <body class="bg-[#121212] text-gray-200 font-sans overflow-x-hidden">
 
@@ -48,12 +64,13 @@
     </main>
 
     <script>
-        // 1. SERVICE WORKER REGISTRATION (OFFLINE BRAIN)
+        // 1. SERVICE WORKER REGISTRATION (WITH YOUR REPO NAME)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Offline Mode System Active'))
-                    .catch(err => console.log('Offline System Failure', err));
+                // Using your repository name "kotappakonda-route"
+                navigator.serviceWorker.register('/kotappakonda-route/sw.js')
+                    .then(reg => console.log('Offline System Active'))
+                    .catch(err => console.log('Offline System Error', err));
             });
         }
 
@@ -66,7 +83,7 @@
             attributionControl: false
         });
 
-        // Add Temple Marker
+        // Add Temple Marker (The Orange Pin)
         new maplibregl.Marker({color: "#FF9800"})
             .setLngLat([80.0385, 16.1456])
             .addTo(map);
@@ -95,7 +112,9 @@
         // 4. WHATSAPP SHARE
         function shareLocation() {
             navigator.geolocation.getCurrentPosition((pos) => {
-                const text = `I am at Kotappakonda Jathara. Follow my location: http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const text = `I am at Kotappakonda Jathara. Follow my location: https://maps.google.com/?q=${lat},${lng}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
             });
         }
@@ -105,8 +124,8 @@
                 'Bus Stop': 'RTC Shuttles at Foothills and Nagireddy Guest House.',
                 'Ambulance': 'Emergency help at Medical Camps in Sectors 4, 12, and 18.',
                 'Temple': 'Main Shrine open 24/7 during Jathara.',
-                'Parking': 'Public parking at base fields only.',
-                'Prabhalu': 'Chariots arrive at the Y-Junction from 3 PM.'
+                'Parking': 'Public parking available at base fields.',
+                'Prabhalu': 'Chariots arrive at the Y-Junction from 3:00 PM.'
             };
             alert(info[type]);
         }
