@@ -12,7 +12,6 @@
     <style>
         body { background-color: #121212; margin: 0; padding: 0; }
         
-        /* Keeping your Terrific Spiritual Header exactly as is */
         .spiritual-header {
             font-size: 1.8rem;
             font-weight: 800;
@@ -31,7 +30,6 @@
             background: #121212;
         }
 
-        /* Fixed full-width map */
         #map {
             width: 100%;
             height: 400px;
@@ -49,7 +47,6 @@
             border-left: 5px solid #FF9800;
         }
         .service-card:active { background: #FF9800; color: #000; }
-        .popup-text { color: #000; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body class="text-gray-200 font-sans">
@@ -94,26 +91,8 @@
             style: 'https://tiles.openfreemap.org/styles/bright', 
             center: [80.0385, 16.1456], 
             zoom: 15,
-            maxZoom: 19, // Ultra-zoom for finding Satrams
+            maxZoom: 19,
             maxBounds: bounds
-        });
-
-        // Your manually updated landmark list
-        const landmarks = [
-            { name: "Main Temple<br>శ్రీ త్రికోటేశ్వరస్వామి దేవాలయం", coords: [80.0385, 16.1456], color: "#FF9800" },
-            { name: "Police Control Room<br>పోలీస్ కంట్రోల్ రూమ్", coords: [80.0378, 16.1448], color: "#1e40af" },
-            { name: "RTC Bus Stand<br>ఆర్టీసీ బస్సు స్టాండ్", coords: [80.0345, 16.1415], color: "#facc15" },
-            { name: "Kamma Satram<br>కమ్మ సత్రం", coords: [80.0395, 16.1440], color: "#9c27b0" },
-            { name: "Reddy Satram<br>రెడ్డి సత్రం", coords: [80.0402, 16.1442], color: "#9c27b0" },
-            { name: "Arya Vysya Satram<br>ఆర్య వైశ్య సత్రం", coords: [80.0390, 16.1435], color: "#9c27b0" },
-            { name: "Yadava Satram<br>యాదవ సత్రం", coords: [80.0382, 16.1432], color: "#9c27b0" }
-        ];
-
-        landmarks.forEach(ln => {
-            new maplibregl.Marker({color: ln.color})
-                .setLngLat(ln.coords)
-                .setPopup(new maplibregl.Popup({offset: 25}).setHTML(`<div class="popup-text">${ln.name}</div>`))
-                .addTo(map);
         });
 
         function shareLocation() {
@@ -126,7 +105,7 @@
         }
 
         function showInfo(type) {
-            alert("Information for " + type + " is synced with the Control Room.");
+            alert("Official " + type + " info will be live during Jathara.");
         }
     </script>
 </body>
