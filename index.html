@@ -6,6 +6,9 @@
     <title>Kotappakonda Sathi</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FF9800">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
@@ -28,7 +31,7 @@
         </div>
 
         <button onclick="shareLocation()" class="w-full mt-6 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
             Share My Location with Family
         </button>
 
@@ -45,22 +48,30 @@
     </main>
 
     <script>
-        // STABLE MAP INITIALIZATION
-        // Using OpenFreeMap Liberty style for high reliability without keys
+        // 1. SERVICE WORKER REGISTRATION (OFFLINE BRAIN)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Offline Mode System Active'))
+                    .catch(err => console.log('Offline System Failure', err));
+            });
+        }
+
+        // 2. MAP INITIALIZATION
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/liberty', // High-performance open source tiles
+            style: 'https://tiles.openfreemap.org/styles/liberty',
             center: [80.039, 16.145], 
             zoom: 14.5,
             attributionControl: false
         });
 
-        // Add a red marker for the temple peak automatically
+        // Add Temple Marker
         new maplibregl.Marker({color: "#FF9800"})
             .setLngLat([80.0385, 16.1456])
             .addTo(map);
 
-        // GEOLOCATION & GEOFENCING
+        // 3. GEOLOCATION & GEOFENCING
         const BBOX = { minLat: 16.125, maxLat: 16.185, minLng: 80.015, maxLng: 80.080 };
 
         function checkLocation() {
@@ -73,29 +84,29 @@
 
                 if (isInside) {
                     statusEl.innerText = "Inside Jathara Zone";
-                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-green-900 text-green-200";
+                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-green-900 text-green-200 inline-block";
                 } else {
                     statusEl.innerText = "Remote Mode (Viewing Outside)";
-                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-gray-700 text-gray-300";
+                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-gray-700 text-gray-300 inline-block";
                 }
-            }, (err) => console.log("GPS Waiting..."), {enableHighAccuracy: true});
+            }, (err) => console.log("Waiting for GPS..."), {enableHighAccuracy: true});
         }
 
-        // WHATSAPP SHARE
+        // 4. WHATSAPP SHARE
         function shareLocation() {
             navigator.geolocation.getCurrentPosition((pos) => {
-                const text = `I am at Kotappakonda Jathara. Follow my location here: https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+                const text = `I am at Kotappakonda Jathara. Follow my location: http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
             });
         }
 
         function showInfo(type) {
             const info = {
-                'Bus Stop': 'RTC Shuttles located at Foothills and Nagireddy Guest House.',
+                'Bus Stop': 'RTC Shuttles at Foothills and Nagireddy Guest House.',
                 'Ambulance': 'Emergency help at Medical Camps in Sectors 4, 12, and 18.',
-                'Temple': 'Main Shrine open for Darshan 24/7 during Jathara.',
-                'Parking': 'Hilltop parking is for VIPs only. Public parking at base fields.',
-                'Prabhalu': 'Chariots arrive at the Y-Junction from 3:00 PM onwards.'
+                'Temple': 'Main Shrine open 24/7 during Jathara.',
+                'Parking': 'Public parking at base fields only.',
+                'Prabhalu': 'Chariots arrive at the Y-Junction from 3 PM.'
             };
             alert(info[type]);
         }
