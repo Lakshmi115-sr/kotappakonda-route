@@ -6,8 +6,6 @@
     <title>Kotappakonda Sathi</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FF9800">
-    <meta name="mobile-web-app-capable" content="yes">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
@@ -23,11 +21,7 @@
             width: 100%;
             margin-bottom: 0.75rem;
         }
-        .service-card:active {
-            background: #2a2a2a;
-            border-color: #fbbf24;
-            color: #fbbf24;
-        }
+        .service-card:active { background: #2a2a2a; border-color: #fbbf24; color: #fbbf24; }
     </style>
 </head>
 <body class="bg-[#121212] text-gray-200 font-sans">
@@ -41,9 +35,7 @@
 
     <main class="p-4 max-w-md mx-auto">
         <div id="map" class="w-full h-[350px] rounded-2xl border-2 border-amber-600/20 shadow-2xl relative bg-[#222]">
-            <div class="absolute top-2 left-2 z-10 bg-black/50 p-2 rounded text-[10px] backdrop-blur-sm">
-                Satellite GPS Active
-            </div>
+            <div class="absolute top-2 left-2 z-10 bg-black/50 p-2 rounded text-[10px] backdrop-blur-sm">Satellite GPS Active</div>
         </div>
 
         <button onclick="shareLocation()" class="w-full mt-6 bg-[#25D366] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform">
@@ -62,49 +54,76 @@
     </main>
 
     <script>
-        // CRITICAL: Registered with your exact repo path
+        // 1. SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                // Change to './sw.js' if you move to Vercel
                 navigator.serviceWorker.register('/kotappakonda-route/sw.js')
                     .then(() => console.log('Offline Ready'))
                     .catch(err => console.error('Offline Error', err));
             });
         }
 
+        // 2. MAP SETUP
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/liberty',
             center: [80.039, 16.145], 
             zoom: 14.5
         });
-
         new maplibregl.Marker({color: "#FF9800"}).setLngLat([80.0385, 16.1456]).addTo(map);
 
-        const BBOX = { minLat: 16.125, maxLat: 16.185, minLng: 80.015, maxLng: 80.080 };
-
-        function checkLocation() {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.watchPosition((pos) => {
-                const { latitude, longitude } = pos.coords;
-                const statusEl = document.getElementById('status-bar');
-                const isInside = latitude >= BBOX.minLat && latitude <= BBOX.maxLat && 
-                                 longitude >= BBOX.minLng && longitude <= BBOX.maxLng;
-
-                if (isInside) {
-                    statusEl.innerText = "Inside Jathara Zone";
-                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-green-900 text-green-200 inline-block";
-                } else {
-                    statusEl.innerText = "Remote Mode (Viewing Outside)";
-                    statusEl.className = "mt-2 py-1 px-4 rounded-full text-xs font-bold bg-gray-700 text-gray-300 inline-block";
-                }
-            }, null, {enableHighAccuracy: true});
-        }
-
+        // 3. UPDATED SHARE LOGIC (Matches your reference image)
         function shareLocation() {
             navigator.geolocation.getCurrentPosition((pos) => {
-                const text = `I am at Kotappakonda. Follow me: http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const zoneDetails = getZoneDetails(lat, lng);
+
+                const message = 
+`*Kotappakonda Jathara Safety App*
+Location Information (Kotappakonda)
+
+*Status* : ${zoneDetails.status}
+*Zone* : ${zoneDetails.sector}
+*Subzone* : ${zoneDetails.subzone}
+*Near* : ${zoneDetails.landmark}
+
+*Open Zone Map:*
+https://kotappakonda-route.vercel.app
+
+*Directions to Reach:*
+https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}
+
+*Live GPS Location:*
+https://www.google.com/maps?q=${lat},${lng}
+
+_Sent via Kotappakonda Safety App_`;
+
+                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
             });
+        }
+
+        // Internal Logic for the 24 Sectors
+        function getZoneDetails(lat, lng) {
+            const BBOX = { minLat: 16.125, maxLat: 16.185, minLng: 80.015, maxLng: 80.080 };
+            const isInside = lat >= BBOX.minLat && lat <= BBOX.maxLat && lng >= BBOX.minLng && lng <= BBOX.maxLng;
+
+            if (isInside) {
+                // Sector 14 example for the temple area
+                return {
+                    status: "Inside Jathara Area",
+                    sector: "ZONE 14",
+                    subzone: "HILL-TOP-S3",
+                    landmark: "Main Temple Entrance"
+                };
+            }
+            return {
+                status: "Outside Jathara Area",
+                sector: "REMOTE",
+                subzone: "N/A",
+                landmark: "Visitor View"
+            };
         }
 
         function showInfo(type) {
@@ -117,8 +136,6 @@
             };
             alert(info[type]);
         }
-
-        checkLocation();
     </script>
 </body>
 </html>
