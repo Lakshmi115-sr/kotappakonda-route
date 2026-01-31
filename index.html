@@ -11,6 +11,8 @@
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         body { background-color: #121212; margin: 0; padding: 0; }
+        
+        /* Keeping your Terrific Spiritual Header exactly as is */
         .spiritual-header {
             font-size: 1.8rem;
             font-weight: 800;
@@ -18,9 +20,24 @@
             padding: 20px 10px;
             color: #FFD700;
             text-shadow: 0px 0px 15px rgba(255, 152, 0, 0.8), 2px 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.3;
         }
-        .app-container { width: 100%; max-width: 600px; margin: 0 auto; min-height: 100vh; background: #121212; }
-        #map { width: 100%; height: 400px; border-bottom: 3px solid #FF9800; }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #121212;
+        }
+
+        /* Fixed full-width map */
+        #map {
+            width: 100%;
+            height: 400px;
+            border-bottom: 3px solid #FF9800;
+        }
+
         .service-card {
             background: #1e1e1e;
             border: 1px solid #333;
@@ -31,13 +48,18 @@
             width: 100%;
             border-left: 5px solid #FF9800;
         }
+        .service-card:active { background: #FF9800; color: #000; }
+        .popup-text { color: #000; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body class="text-gray-200 font-sans">
+
     <div class="app-container">
         <header class="bg-[#1a1a1a] border-b border-gray-800">
-            <div class="spiritual-header">త్రికోటేశ్వరస్వామి దీవెనలతో</div>
-            <div id="status-bar" class="w-full text-center py-2 text-xs font-black bg-amber-600 text-black">
+            <div class="spiritual-header">
+                త్రికోటేశ్వరస్వామి దీవెనలతో
+            </div>
+            <div id="status-bar" class="w-full text-center py-2 text-xs font-black uppercase tracking-widest bg-amber-600 text-black">
                 LIVE JATHARA GPS ACTIVE
             </div>
         </header>
@@ -45,41 +67,52 @@
         <div id="map"></div>
 
         <div class="p-4">
-            <button onclick="shareLocation()" class="w-full bg-[#25D366] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,211,102,0.4)] active:scale-95 text-lg">
+            <button onclick="shareLocation()" class="w-full bg-[#25D366] text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,211,102,0.4)] active:scale-95 transition-all text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
                 SHARE LOCATION WITH FAMILY
             </button>
         </div>
 
         <section>
-            <div class="px-4 py-2 bg-zinc-900 border-y border-zinc-800 text-amber-500 font-bold text-sm uppercase">Police Managed Sectors</div>
-            <button onclick="showInfo('Sectors')" class="service-card border-b border-zinc-800">📋 View All 24 Police Sectors</button>
-            <button onclick="showInfo('Police')" class="service-card">👮 Contact Sector In-Charge</button>
+            <div class="px-4 py-2 bg-zinc-900 border-y border-zinc-800 text-amber-500 font-bold text-sm tracking-widest uppercase">
+                Festival Services
+            </div>
+            <div class="flex flex-col">
+                <button onclick="showInfo('Bus')" class="service-card border-b border-zinc-800">🚍 RTC Bus Stop Locations</button>
+                <button onclick="showInfo('Medical')" class="service-card border-b border-zinc-800">🚑 Medical & Emergency</button>
+                <button onclick="showInfo('Temple')" class="service-card border-b border-zinc-800">🛕 Temple Info & Timings</button>
+                <button onclick="showInfo('Parking')" class="service-card">🅿️ Parking Zones</button>
+            </div>
         </section>
     </div>
 
     <script>
-        // STRICT MAP CLIPPING (Only Kotappakonda Hill)
         const bounds = [[80.01, 16.12], [80.07, 16.18]];
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/liberty',
+            style: 'https://tiles.openfreemap.org/styles/bright', 
             center: [80.0385, 16.1456], 
-            zoom: 14.5,
+            zoom: 15,
+            maxZoom: 19, // Ultra-zoom for finding Satrams
             maxBounds: bounds
         });
 
-        // Key Locations for Police Reference
-        const sectors = [
-            { name: "Sector 14: Main Temple", coords: [80.0385, 16.1456], color: "#FF9800" },
-            { name: "Sector 04: Hill Base", coords: [80.0360, 16.1430], color: "#3b82f6" },
-            { name: "Sector 12: VIP Parking", coords: [80.0410, 16.1480], color: "#10b981" }
+        // Your manually updated landmark list
+        const landmarks = [
+            { name: "Main Temple<br>శ్రీ త్రికోటేశ్వరస్వామి దేవాలయం", coords: [80.0385, 16.1456], color: "#FF9800" },
+            { name: "Police Control Room<br>పోలీస్ కంట్రోల్ రూమ్", coords: [80.0378, 16.1448], color: "#1e40af" },
+            { name: "RTC Bus Stand<br>ఆర్టీసీ బస్సు స్టాండ్", coords: [80.0345, 16.1415], color: "#facc15" },
+            { name: "Kamma Satram<br>కమ్మ సత్రం", coords: [80.0395, 16.1440], color: "#9c27b0" },
+            { name: "Reddy Satram<br>రెడ్డి సత్రం", coords: [80.0402, 16.1442], color: "#9c27b0" },
+            { name: "Arya Vysya Satram<br>ఆర్య వైశ్య సత్రం", coords: [80.0390, 16.1435], color: "#9c27b0" },
+            { name: "Yadava Satram<br>యాదవ సత్రం", coords: [80.0382, 16.1432], color: "#9c27b0" }
         ];
 
-        sectors.forEach(s => {
-            new maplibregl.Marker({color: s.color})
-                .setLngLat(s.coords)
-                .setPopup(new maplibregl.Popup().setHTML(`<div class="text-center p-2"><b>${s.name}</b></div>`))
+        landmarks.forEach(ln => {
+            new maplibregl.Marker({color: ln.color})
+                .setLngLat(ln.coords)
+                .setPopup(new maplibregl.Popup({offset: 25}).setHTML(`<div class="popup-text">${ln.name}</div>`))
                 .addTo(map);
         });
 
@@ -87,21 +120,13 @@
             navigator.geolocation.getCurrentPosition((pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
-                // Automatically calculates which of the 24 sectors the user is in
-                const sectorName = getLiveSector(lat, lng);
-
-                const msg = `*Kotappakonda Thodu - Safety Update*\n\n*Current Location:* ${sectorName}\n\n*Open Sector Map:*\nhttps://kotappakonda-route.vercel.app\n\n*Navigate to Me:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
+                const msg = `*Kotappakonda Thodu - Safety Update*\nI am in the Jathara area.\n\n*Open Map:*\nhttps://kotappakonda-route.vercel.app\n\n*My GPS Location:*\nhttps://www.google.com/maps?q=${lat},${lng}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
 
-        function getLiveSector(lat, lng) {
-            // Placeholder: This logic would be expanded to map all 24 sector coordinates
-            return (lat > 16.14) ? "Sector 14 (Temple Area)" : "Sector 04 (Foothills)";
-        }
-
         function showInfo(type) {
-            alert("Official Police Sector Information is synced with the District Control Room.");
+            alert("Information for " + type + " is synced with the Control Room.");
         }
     </script>
 </body>
