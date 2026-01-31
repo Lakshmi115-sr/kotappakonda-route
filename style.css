@@ -1,0 +1,24 @@
+/* Custom styles to support your sketch */
+.service-card {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: left;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #e0e0e0;
+}
+
+.service-card:active {
+    background: #2a2a2a;
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+#status-bar.in-zone { background: #065f46; color: #a7f3d0; }
+#status-bar.out-zone { background: #991b1b; color: #fecaca; }
+#status-bar.remote { background: #374151; color: #d1d5db; }
+
+/* Ensure map fills the container */
+.maplibregl-canvas { border-radius: 12px; }
