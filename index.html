@@ -6,9 +6,11 @@
     <title>Kotappakonda Thodu</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#FFD700">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
+    
     <style>
         body { background-color: #121212; margin: 0; padding: 0; font-family: sans-serif; color: white; }
         
@@ -117,8 +119,7 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Full Detailed Information Template you prefer
-                    const message = `*Kotappakonda Thodu*\n\n*Kotappakonda Jathara Safety App*\nLocation Information (Kotappakonda)\n\n*Status* : Inside Jathara Area\n*Zone* : MAIN TEMPLE\n*Subzone* : GHAT ROAD\n*Near* : Hill Entrance\n\n*Open Zone Map*:\nhttps://kotappakonda-route.vercel.app\n\n*Directions to Reach*:\nhttps://www.google.com/maps/dir/?api=1&destination=${lat},${lon}\n\n*Live GPS Location*:\nhttps://www.google.com/maps?q=${lat},${lon}\n\n_Sent via Kotappakonda Safety App_`;
+                    const message = `*Kotappakonda Thodu*\n\n*Kotappakonda Jathara Safety App*\nLocation Information (Kotappakonda)\n\n*Status* : Inside Jathara Area\n*Near* : Hill Entrance\n\n*Open Zone Map*:\nhttps://kotappakonda-route.vercel.app\n\n*Live GPS Location*:\nhttp://maps.google.com/?q=${lat},${lon}\n\n_Sent via Kotappakonda Safety App_`;
                     
                     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
                     window.open(whatsappUrl, '_blank');
@@ -128,21 +129,21 @@
             }
         }
 
-        // STEP 1 & 2: Service Worker Registration & Persistent Storage
+        // STEP 1 & 2: Instant Service Worker Registration & Persistent Storage
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => {
-                        console.log('Offline Engine Active:', reg.scope);
-                        // Request Persistent Storage
-                        if (navigator.storage && navigator.storage.persist) {
-                            navigator.storage.persist().then(granted => {
-                                if (granted) console.log("Map data locked offline!");
-                            });
-                        }
-                    })
-                    .catch(err => console.log('Offline Engine Failed:', err));
-            });
+            // Register immediately without waiting for full window load
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => {
+                    console.log('Offline Engine Active:', reg.scope);
+                    
+                    // Requesting browser to NEVER delete map data
+                    if (navigator.storage && navigator.storage.persist) {
+                        navigator.storage.persist().then(granted => {
+                            if (granted) console.log("Map data locked offline permanently!");
+                        });
+                    }
+                })
+                .catch(err => console.log('Offline Engine Failed:', err));
         }
     </script>
 </body>
