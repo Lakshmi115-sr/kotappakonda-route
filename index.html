@@ -4,16 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kotappakonda Thodu</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FFD700">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    
     <style>
         body { background-color: #121212; margin: 0; padding: 0; font-family: sans-serif; color: white; }
-        
         .spiritual-header {
             font-size: 1.8rem;
             font-weight: 800;
@@ -23,7 +18,6 @@
             text-shadow: 0px 0px 15px rgba(255, 215, 0, 0.6);
             line-height: 1.3;
         }
-
         .app-container {
             width: 100%;
             max-width: 600px;
@@ -33,7 +27,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .status-bar {
             background: #FFD700;
             color: black;
@@ -41,30 +34,14 @@
             text-align: center;
             padding: 8px;
             font-size: 0.9rem;
-            letter-spacing: 1px;
             text-transform: uppercase;
         }
-
-        #map {
-            flex-grow: 1;
-            width: 100%;
-            height: 500px;
-            border-top: 2px solid #333;
-            border-bottom: 2px solid #333;
-        }
-
-        .action-area {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: #121212;
-        }
-
+        #map { flex-grow: 1; width: 100%; height: 500px; border-top: 2px solid #333; }
+        .action-area { padding: 20px; background: #121212; }
         .share-btn {
             background: #25D366;
             color: white;
-            border: none;
+            width: 100%;
             padding: 18px;
             border-radius: 12px;
             font-size: 1.1rem;
@@ -73,43 +50,24 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-            cursor: pointer;
-            transition: transform 0.2s;
         }
-
-        .share-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        <div class="spiritual-header">
-            త్రికోటేశ్వరస్వామి దీవెనలతో
-        </div>
-
-        <div class="status-bar">
-            LIVE JATHARA GPS ACTIVE
-        </div>
-
+        <div class="spiritual-header">త్రికోటేశ్వరస్వామి దీవెనలతో</div>
+        <div class="status-bar">LIVE JATHARA GPS ACTIVE</div>
         <div id="map"></div>
-
         <div class="action-area">
-            <button class="share-btn" onclick="shareLocation()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.747-2.874-2.512-2.96-2.626-.087-.115-.708-.941-.708-1.793 0-.852.448-1.271.607-1.441.159-.171.348-.215.464-.215.117 0 .232.001.334.006.106.005.249-.04.391.297.144.346.491 1.2.534 1.287.043.087.072.188.014.304-.058.115-.087.188-.174.289l-.26.304c-.087.101-.177.211-.076.385.101.174.45.743.966 1.201.665.59 1.225.773 1.399.86.174.088.275.073.376-.043.101-.116.434-.506.549-.68.116-.174.232-.145.391-.087.159.058 1.012.477 1.186.564.174.087.29.13.332.202.043.073.043.42-.101.825z"/>
-                </svg>
-                SHARE LOCATION WITH FAMILY
-            </button>
+            <button class="share-btn" onclick="shareLocation()">SHARE LOCATION WITH FAMILY</button>
         </div>
     </div>
 
     <script>
-        // Initialize Map
         const map = new mlgl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/dark',
-            center: [80.035, 16.153], // Kotappakonda Center
+            center: [80.035, 16.153],
             zoom: 14
         });
 
@@ -118,34 +76,11 @@
                 navigator.geolocation.getCurrentPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    
-                    const message = `*Kotappakonda Thodu*\n\n*Kotappakonda Jathara Safety App*\nLocation Information (Kotappakonda)\n\n*Status* : Inside Jathara Area\n*Near* : Hill Entrance\n\n*Open Zone Map*:\nhttps://kotappakonda-route.vercel.app\n\n*Live GPS Location*:\nhttp://maps.google.com/?q=${lat},${lon}\n\n_Sent via Kotappakonda Safety App_`;
-                    
-                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                    window.open(whatsappUrl, '_blank');
+                    const message = `*Kotappakonda Thodu*\nLive Location: https://www.google.com/maps?q=${lat},${lon}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
                 });
-            } else {
-                alert("Geolocation is not supported by this browser.");
             }
-        }
-
-        // STEP 1 & 2: Instant Service Worker Registration & Persistent Storage
-        if ('serviceWorker' in navigator) {
-            // Register immediately without waiting for full window load
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(reg => {
-                    console.log('Offline Engine Active:', reg.scope);
-                    
-                    // Requesting browser to NEVER delete map data
-                    if (navigator.storage && navigator.storage.persist) {
-                        navigator.storage.persist().then(granted => {
-                            if (granted) console.log("Map data locked offline permanently!");
-                        });
-                    }
-                })
-                .catch(err => console.log('Offline Engine Failed:', err));
         }
     </script>
 </body>
 </html>
-
