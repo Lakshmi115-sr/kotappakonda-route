@@ -58,7 +58,7 @@
     <div id="map"></div>
 
     <div class="btn-container">
-        <button class="share-btn" onclick="shareLocation()">SHARE LOCATION WITH FAMILY</button>
+        <button class="share-btn" onclick="shareLocation()">SHARE LOCATION ON WHATSAPP</button>
     </div>
 
     <script>
@@ -66,11 +66,11 @@
         // Centered to include all villages
         const hillCenter = [80.0420, 16.1450]; 
 
-        // 1. Initialize Map with Satellite Style
+        // 1. Initialize Map with CLEAN STREET STYLE
         const map = new maplibregl.Map({
             container: 'map',
-            // Free high-quality satellite imagery
-            style: 'https://api.maptiler.com/maps/hybrid/style.json?key=get_your_own_Op67p888S', 
+            // This is the clean, high-quality white/green street style
+            style: 'https://tiles.openfreemap.org/styles/bright', 
             center: hillCenter,
             zoom: 13.5
         });
@@ -89,7 +89,7 @@
             2: { n: 16.156, s: 16.152, w: 80.035, e: 80.040 }
         };
 
-        // 4. Circle Logic for 3.2km Radius
+        // 4. Circle Logic for 3.2km Radius (Includes Pamidimarri and Gonepudi)
         function createCircle(center, radiusKm) {
             const points = 128;
             const coords = [];
@@ -106,7 +106,7 @@
         const circlePath = createCircle(hillCenter, 3.2);
 
         map.on('load', () => {
-            // Draw Red Circle Boundary
+            // Draw Blue Circle Boundary (Looks more professional on a light map)
             map.addSource('perimeter', {
                 'type': 'geojson',
                 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [circlePath] } }
@@ -116,7 +116,7 @@
                 'id': 'p-line',
                 'type': 'line',
                 'source': 'perimeter',
-                'paint': { 'line-color': '#FF0000', 'line-width': 4, 'line-dasharray': [2, 1] }
+                'paint': { 'line-color': '#2563eb', 'line-width': 4 } 
             });
 
             // Draw Gold Sector Boxes
