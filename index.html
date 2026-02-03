@@ -26,26 +26,27 @@
 
     <script>
         let currentStatus = "Searching...";
+        const hillCenter = [80.0420, 16.1450]; // Adjusted center to balance villages
+        
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/dark',
-            center: [80.0384, 16.1485],
-            zoom: 14
+            center: hillCenter,
+            zoom: 13.5
         });
 
         const geolocate = new maplibregl.GeolocateControl({ positionOptions: {enableHighAccuracy: true}, trackUserLocation: true, showUserLocation: true });
         map.addControl(geolocate);
 
-        // Coordinates for the 24 Sector Boxes
+        // Define Sector Boxes (Sample)
         const sectorBoundaries = {
-            1: { n: 16.152, s: 16.148, w: 80.035, e: 80.040, landmark: "Main Temple Arch" },
-            2: { n: 16.156, s: 16.152, w: 80.035, e: 80.040, landmark: "Hill Road Entrance" }
-            // Add 3-24 here
+            1: { n: 16.152, s: 16.148, w: 80.035, e: 80.040 },
+            2: { n: 16.156, s: 16.152, w: 80.035, e: 80.040 }
         };
 
-        // Creates the exact circle from your hand-drawn image
+        // Expanded Circle Logic to include Pamidimarri and Kattubadivaripalem
         function createCircle(center, radiusKm) {
-            const points = 64;
+            const points = 128; // Smoother circle
             const coords = [];
             for (let i = 0; i < points; i++) {
                 const angle = (i / points) * (2 * Math.PI);
@@ -57,14 +58,12 @@
             return coords;
         }
 
-        const circlePath = createCircle([80.0384, 16.1485], 2.2); // 2.2km radius covers your villages
+        const circlePath = createCircle(hillCenter, 3.2); // 3.2km radius covers your Villages
 
         map.on('load', () => {
-            // Draw the Circle Perimeter
             map.addSource('perimeter', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [circlePath] } } });
             map.addLayer({ 'id': 'p-line', 'type': 'line', 'source': 'perimeter', 'paint': { 'line-color': '#FF0000', 'line-width': 4, 'line-dasharray': [2,1] } });
             
-            // Draw Sector Boxes
             Object.keys(sectorBoundaries).forEach(id => {
                 const b = sectorBoundaries[id];
                 map.addSource(`s-${id}`, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [[[b.w,b.s],[b.e,b.s],[b.e,b.n],[b.w,b.n],[b.w,b.s]]] } } });
@@ -76,12 +75,17 @@
         geolocate.on('geolocate', (e) => {
             const lat = e.coords.latitude;
             const lon = e.coords.longitude;
-            let status = "⚠️ OUTSIDE JATHARA AREA";
+            
+            // Haversine distance for geofencing
+            const R = 6371; 
+            const dLat = (lat - hillCenter[1]) * Math.PI / 180;
+            const dLon = (lon - hillCenter[0]) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(hillCenter[1] * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-            // Check if inside the Circle Perimeter
-            const dist = Math.sqrt(Math.pow(lat - 16.1485, 2) + Math.pow(lon - 80.0384, 2));
-            if (dist < 0.02) { // Inside your drawn circle
-                status = "In Jathara Premises";
+            let status = distance <= 3.2 ? "In Jathara Premises" : "⚠️ OUTSIDE JATHARA AREA";
+
+            if (distance <= 3.2) {
                 for (let id in sectorBoundaries) {
                     let b = sectorBoundaries[id];
                     if (lat <= b.n && lat >= b.s && lon >= b.w && lon <= b.e) {
