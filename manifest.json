@@ -1,22 +1,11 @@
 {
   "name": "Kotappakonda Thodu",
   "short_name": "Kotappakonda",
-  "description": "Offline-first Safety and Pilgrim Guide for Kotappakonda Jathara 2026.",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#FFD700",
-  "orientation": "portrait",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }
   ]
 }
