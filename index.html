@@ -8,45 +8,41 @@
     <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #121212; color: white; margin: 0; font-family: sans-serif; }
-        .spiritual-header { font-size: 1.8rem; font-weight: 800; text-align: center; padding: 20px; color: #FFD700; text-shadow: 0px 0px 15px rgba(255, 215, 0, 0.6); }
-        .status-bar { background: #FFD700; color: black; font-weight: 800; text-align: center; padding: 8px; font-size: 0.9rem; text-transform: uppercase; }
-        #map { width: 100%; height: 60vh; border-top: 2px solid #333; border-bottom: 2px solid #333; }
-        .btn-container { padding: 20px; display: flex; justify-content: center; }
-        .share-btn { background: #25D366; color: white; width: 100%; max-width: 500px; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; }
+        body { background-color: #f8f9fa; color: #333; margin: 0; font-family: sans-serif; }
+        .spiritual-header { background: #1a1a1a; font-size: 1.8rem; font-weight: 800; text-align: center; padding: 20px; color: #FFD700; text-shadow: 0px 0px 15px rgba(255, 215, 0, 0.6); }
+        .status-bar { background: #FFD700; color: black; font-weight: 800; text-align: center; padding: 10px; font-size: 1rem; text-transform: uppercase; border-bottom: 2px solid #eab308; }
+        #map { width: 100%; height: 60vh; }
+        .btn-container { padding: 20px; display: flex; justify-content: center; background: white; }
+        .share-btn { background: #25D366; color: white; width: 100%; max-width: 500px; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; border: none; }
     </style>
 </head>
 <body>
     <div class="spiritual-header">త్రికోటేశ్వరస్వామి దీవెనలతో</div>
-    <div id="sector-display" class="status-bar">LOCATING...</div>
+    <div id="sector-display" class="status-bar">GPS మ్యాప్ సిద్ధంగా ఉంది...</div>
     <div id="map"></div>
     <div class="btn-container">
-        <button class="share-btn" onclick="shareLocation()">SHARE LOCATION WITH FAMILY</button>
+        <button class="share-btn" onclick="shareLocation()">SHARE LOCATION ON WHATSAPP</button>
     </div>
 
     <script>
         let currentStatus = "Searching...";
-        const hillCenter = [80.0420, 16.1450]; // Adjusted center to balance villages
+        const hillCenter = [80.0384, 16.1485];
         
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/dark',
+            // SWITCHED TO BRIGHT STREET STYLE
+            style: 'https://tiles.openfreemap.org/styles/bright', 
             center: hillCenter,
-            zoom: 13.5
+            zoom: 14
         });
 
         const geolocate = new maplibregl.GeolocateControl({ positionOptions: {enableHighAccuracy: true}, trackUserLocation: true, showUserLocation: true });
         map.addControl(geolocate);
 
-        // Define Sector Boxes (Sample)
-        const sectorBoundaries = {
-            1: { n: 16.152, s: 16.148, w: 80.035, e: 80.040 },
-            2: { n: 16.156, s: 16.152, w: 80.035, e: 80.040 }
-        };
+        const circlePath = createCircle(hillCenter, 3.2);
 
-        // Expanded Circle Logic to include Pamidimarri and Kattubadivaripalem
         function createCircle(center, radiusKm) {
-            const points = 128; // Smoother circle
+            const points = 128;
             const coords = [];
             for (let i = 0; i < points; i++) {
                 const angle = (i / points) * (2 * Math.PI);
@@ -58,47 +54,24 @@
             return coords;
         }
 
-        const circlePath = createCircle(hillCenter, 3.2); // 3.2km radius covers your Villages
-
         map.on('load', () => {
+            // Draw the Circle Perimeter in Blue (Professional look)
             map.addSource('perimeter', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [circlePath] } } });
-            map.addLayer({ 'id': 'p-line', 'type': 'line', 'source': 'perimeter', 'paint': { 'line-color': '#FF0000', 'line-width': 4, 'line-dasharray': [2,1] } });
+            map.addLayer({ 'id': 'p-line', 'type': 'line', 'source': 'perimeter', 'paint': { 'line-color': '#2563eb', 'line-width': 4 } });
             
-            Object.keys(sectorBoundaries).forEach(id => {
-                const b = sectorBoundaries[id];
-                map.addSource(`s-${id}`, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [[[b.w,b.s],[b.e,b.s],[b.e,b.n],[b.w,b.n],[b.w,b.s]]] } } });
-                map.addLayer({ 'id': `l-${id}`, 'type': 'fill', 'source': `s-${id}`, 'paint': { 'fill-color': '#FFD700', 'fill-opacity': 0.15 } });
-            });
             geolocate.trigger();
         });
 
         geolocate.on('geolocate', (e) => {
             const lat = e.coords.latitude;
             const lon = e.coords.longitude;
-            
-            // Haversine distance for geofencing
-            const R = 6371; 
-            const dLat = (lat - hillCenter[1]) * Math.PI / 180;
-            const dLon = (lon - hillCenter[0]) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(hillCenter[1] * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            let status = distance <= 3.2 ? "In Jathara Premises" : "⚠️ OUTSIDE JATHARA AREA";
-
-            if (distance <= 3.2) {
-                for (let id in sectorBoundaries) {
-                    let b = sectorBoundaries[id];
-                    if (lat <= b.n && lat >= b.s && lon >= b.w && lon <= b.e) {
-                        status = "Police Sector " + id;
-                        break;
-                    }
-                }
-            }
+            // Precise Circle Logic
+            const dist = Math.sqrt(Math.pow(lat - 16.1485, 2) + Math.pow(lon - 80.0384, 2));
+            let status = dist <= 0.03 ? "In Jathara Area" : "⚠️ Outside Jathara";
 
             if (status !== currentStatus) {
                 currentStatus = status;
                 document.getElementById('sector-display').innerText = currentStatus;
-                alert(currentStatus);
             }
         });
 
