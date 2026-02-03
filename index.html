@@ -12,7 +12,7 @@
     <style>
         body { background-color: #121212; color: white; margin: 0; font-family: sans-serif; }
         
-        /* Your Terrific Title Design */
+        /* Your Original Title Design */
         .spiritual-header { 
             font-size: 1.8rem; 
             font-weight: 800; 
@@ -32,12 +32,11 @@
             text-transform: uppercase;
         }
 
-        /* The Map Area */
         #map { width: 100%; height: 60vh; border-top: 2px solid #333; border-bottom: 2px solid #333; }
 
         .btn-container { padding: 20px; display: flex; justify-content: center; }
         
-        /* Your Green Button */
+        /* Your Original Green Button */
         .share-btn { 
             background: #25D366; 
             color: white; 
@@ -54,7 +53,7 @@
 </head>
 <body>
     <div class="spiritual-header">త్రికోటేశ్వరస్వామి దీవెనలతో</div>
-    <div class="status-bar">LIVE JATHARA GPS ACTIVE</div>
+    <div id="sector-display" class="status-bar">WAITING FOR GPS...</div>
 
     <div id="map"></div>
 
@@ -63,25 +62,102 @@
     </div>
 
     <script>
-        // Initializing the map correctly using maplibregl
+        let currentSector = "Outside Jathara Area";
+
+        // 1. Initialize Map
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/dark',
-            center: [80.035, 16.153], // Kotappakonda Hill Coordinates
+            center: [80.035, 16.153], 
             zoom: 14
         });
 
-        // WhatsApp Location Sharing
+        // 2. Add Blue Dot (User Tracking)
+        const geolocate = new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true,
+            showUserLocation: true
+        });
+        map.addControl(geolocate);
+
+        // 3. Define the Sector Boxes (Clipping Logic)
+        // You just need to fill in the North/South/East/West for all 24
+        const sectorBoundaries = {
+            1: { n: 16.155, s: 16.150, w: 80.030, e: 80.035 },
+            2: { n: 16.159, s: 16.155, w: 80.030, e: 80.035 }
+            // Add sectors 3-24 here...
+        };
+
+        // 4. Define the Perimeter Polyline Coordinates
+        const perimeterPath = [
+            [80.030, 16.150], [80.045, 16.150], [80.045, 16.170], [80.030, 16.170], [80.030, 16.150]
+        ];
+
+        map.on('load', () => {
+            // Draw Polyline Boundary
+            map.addSource('perimeter', {
+                'type': 'geojson',
+                'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': perimeterPath } }
+            });
+
+            map.addLayer({
+                'id': 'perimeter-line',
+                'type': 'line',
+                'source': 'perimeter',
+                'paint': { 'line-color': '#FF0000', 'line-width': 4, 'line-dasharray': [2, 1] }
+            });
+
+            // Draw Sector Boxes
+            Object.keys(sectorBoundaries).forEach(id => {
+                const b = sectorBoundaries[id];
+                const coords = [[[b.w, b.s], [b.e, b.s], [b.e, b.n], [b.w, b.n], [b.w, b.s]]];
+                
+                map.addSource(`sector-${id}`, {
+                    'type': 'geojson',
+                    'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': coords } }
+                });
+
+                map.addLayer({
+                    'id': `layer-${id}`,
+                    'type': 'fill',
+                    'source': `sector-${id}`,
+                    'paint': { 'fill-color': '#FFD700', 'fill-opacity': 0.1 }
+                });
+            });
+
+            geolocate.trigger();
+        });
+
+        // 5. Geofence Check Logic
+        geolocate.on('geolocate', (e) => {
+            const lat = e.coords.latitude;
+            const lon = e.coords.longitude;
+            let found = "Outside Jathara Area";
+
+            for (let id in sectorBoundaries) {
+                let b = sectorBoundaries[id];
+                if (lat <= b.n && lat >= b.s && lon >= b.w && lon <= b.e) {
+                    found = "Police Sector " + id;
+                    break;
+                }
+            }
+
+            if (found !== currentSector) {
+                currentSector = found;
+                document.getElementById('sector-display').innerText = currentSector;
+                alert(currentSector === "Outside Jathara Area" ? "⚠️ Alert: You are outside the 24 sectors." : "✅ Welcome to " + currentSector);
+            }
+        });
+
+        // 6. Madaram-Style Share Location
         function shareLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
-                    const msg = `*Kotappakonda Thodu*\nLive Location: https://www.google.com/maps?q=${lat},${lon}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                    const message = `*Kotappakonda Thodu*\n*Status*: ${currentSector}\n*Live Map*: https://www.google.com/maps?q=${lat},${lon}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
                 });
-            } else {
-                alert("Please enable GPS/Location on your device.");
             }
         }
     </script>
