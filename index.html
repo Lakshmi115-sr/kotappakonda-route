@@ -17,16 +17,17 @@
             justify-content: center;
             text-align: center;
         }
-        /* Medium Weight Telugu Title with Soft Glow */
+        /* Refined Medium Weight Telugu Heading */
         .terrific-title {
             color: #FFD700;
             font-size: 26px;
-            font-weight: 500; /* Medium weight */
+            font-weight: 500;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); 
         }
 
         #map { position: absolute; top: 120px; bottom: 80px; width: 100%; border-top: 2px solid #FFD700; }
 
+        /* Restored your specific Yellow Status Bar */
         .status-bar {
             height: 40px;
             background-color: #FFD700;
@@ -35,7 +36,8 @@
             justify-content: center;
             font-weight: bold;
             color: #000;
-            font-size: 15px;
+            font-size: 16px;
+            letter-spacing: 1px;
         }
 
         .footer {
@@ -66,7 +68,7 @@
         <div class="terrific-title">శ్రీ త్రికోటేశ్వరస్వామి దీవెనలతో</div>
     </div>
     
-    <div class="status-bar">CENTER POINT & OUT POINT LOCATIONS</div>
+    <div class="status-bar">IN JATHARA PREMISES</div>
     
     <div id="map"></div>
 
@@ -75,17 +77,16 @@
     </div>
 
     <script>
-        const EXIT_POINT = [80.049340, 16.148340]; // Narasaraopet Exit
-        const CENTER_POINT = [80.046062, 16.141687]; // Junction 42RQ+PMJ
+        const EXIT_POINT = [80.049340, 16.148340]; 
+        const CENTER_POINT = [80.046062, 16.141687]; 
 
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://demotiles.maplibre.org/style.json', 
             center: CENTER_POINT,
-            zoom: 16 
+            zoom: 16 // Ensures it loads on the hill, not the world map
         });
 
-        // Function to create the Concept Circle
         function createGeoJSONCircle(center, radiusInKm, points = 64) {
             const coords = { latitude: center[1], longitude: center[0] };
             const km = radiusInKm;
@@ -104,10 +105,10 @@
         };
 
         map.on('load', () => {
-            // 1. ADD THE CONCEPT CIRCLE around CENTER POINT
+            // THE BLUE CONCEPT CIRCLE RESTORED
             map.addSource('circleData', {
                 'type': 'geojson',
-                'data': createGeoJSONCircle(CENTER_POINT, 0.4) // 0.4km Concept Circle
+                'data': createGeoJSONCircle(CENTER_POINT, 0.4) 
             });
 
             map.addLayer({
@@ -117,27 +118,22 @@
                 'paint': { 'fill-color': '#007bff', 'fill-opacity': 0.25 }
             });
 
-            // 2. MARKERS WITH POPUP LABELS
-            new maplibregl.Marker({ color: '#FFD700' })
-                .setLngLat(CENTER_POINT)
-                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<h3>Center Point</h3>'))
-                .addTo(map); 
+            // FIXED MARKERS (Center & Out Point)
+            new maplibregl.Marker({ color: '#FFD700' }).setLngLat(CENTER_POINT).addTo(map);
+            new maplibregl.Marker({ color: '#FF0000' }).setLngLat(EXIT_POINT).addTo(map);
 
-            new maplibregl.Marker({ color: '#FF0000' })
-                .setLngLat(EXIT_POINT)
-                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<h3>Out Point</h3>'))
-                .addTo(map);
+            // DOTTED LINE FROM CENTER TO EXIT
+            map.addSource('route-line', {
+                'type': 'geojson',
+                'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [CENTER_POINT, EXIT_POINT] } }
+            });
 
-            // Open popups by default for the demo
-            const centerPopup = new maplibregl.Popup({ closeOnClick: false })
-                .setLngLat(CENTER_POINT)
-                .setHTML('<strong>Center Point</strong>')
-                .addTo(map);
-
-            const exitPopup = new maplibregl.Popup({ closeOnClick: false })
-                .setLngLat(EXIT_POINT)
-                .setHTML('<strong>Out Point</strong>')
-                .addTo(map);
+            map.addLayer({
+                'id': 'dotted-path',
+                'type': 'line',
+                'source': 'route-line',
+                'paint': { 'line-color': '#FF0000', 'line-width': 4, 'line-dasharray': [2, 1] }
+            });
         });
     </script>
 </body>
