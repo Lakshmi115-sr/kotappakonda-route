@@ -1,116 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kotappakonda Thodu</title>
-    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="utf-8" />
+    <title>Kotappakonda Thodu - Police Edition</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
-        body { background-color: #121212; color: white; margin: 0; font-family: sans-serif; }
-        .spiritual-header { font-size: 1.8rem; font-weight: 800; text-align: center; padding: 20px; color: #FFD700; text-shadow: 0px 0px 15px rgba(255, 215, 0, 0.6); }
-        .status-bar { background: #FFD700; color: black; font-weight: 800; text-align: center; padding: 8px; font-size: 0.9rem; text-transform: uppercase; }
-        #map { width: 100%; height: 60vh; border-top: 2px solid #333; border-bottom: 2px solid #333; }
-        .btn-container { padding: 20px; display: flex; justify-content: center; }
-        .share-btn { background: #25D366; color: white; width: 100%; max-width: 500px; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; }
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .info-box {
+            position: absolute; top: 10px; left: 10px; z-index: 1;
+            background: rgba(255, 255, 255, 0.9); padding: 10px;
+            border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
-    <div class="spiritual-header">త్రికోటేశ్వరస్వామి దీవెనలతో</div>
-    <div id="sector-display" class="status-bar">LOCATING...</div>
-    <div id="map"></div>
-    <div class="btn-container">
-        <button class="share-btn" onclick="shareLocation()">SHARE LOCATION ON WHATSAPP</button>
+    <div class="info-box" id="info">
+        <strong>Status:</strong> <span id="status">Locating...</span><br>
+        <span id="distance-info">Select a target on map</span>
     </div>
+    <div id="map"></div>
 
     <script>
-        // --- 1. SERVICE WORKER REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log("Offline Mode Ready"))
-                    .catch(err => console.log("Offline Setup Failed", err));
-            });
-        }
-
-        // --- 2. MAP & GPS LOGIC ---
-        let currentStatus = "Outside Jathara Area";
-        const hillCenter = [80.0420, 16.1450]; 
-        const radiusLimit = 3.2; 
+        // COORDINATES FROM YOUR FIELD RESEARCH
+        const EXIT_COORDS = [80.049340, 16.148340]; // Narasaraopet Exit
+        const JUNCTION_COORDS = [80.046062, 16.141687]; // Junction 42RQ+PMJ
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/bright', 
-            center: hillCenter, zoom: 13.5
+            style: 'https://demotiles.maplibre.org/style.json', // Use your offline tiles URL here
+            center: JUNCTION_COORDS,
+            zoom: 15
         });
 
-        const geolocate = new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true, showUserLocation: true
-        });
-        map.addControl(geolocate);
+        let userMarker = new maplibregl.Marker({ color: 'blue' }).setLngLat([0,0]).addTo(map);
 
-        const sectorBoundaries = {
-            1: { n: 16.152, s: 16.148, w: 80.035, e: 80.040 },
-            2: { n: 16.156, s: 16.152, w: 80.035, e: 80.040 }
-        };
-
-        function createCircle(center, radiusKm) {
-            const points = 64; const coords = [];
-            for (let i = 0; i < points; i++) {
-                const angle = (i / points) * (2 * Math.PI);
-                const dx = radiusKm * Math.cos(angle) / (111.32 * Math.cos(center[1] * Math.PI / 180));
-                const dy = radiusKm * Math.sin(angle) / 110.57;
-                coords.push([center[0] + dx, center[1] + dy]);
-            }
-            coords.push(coords[0]); return coords;
+        // HAVERSINE FORMULA (Offline Distance Logic)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return (R * c).toFixed(2);
         }
 
         map.on('load', () => {
-            const circlePath = createCircle(hillCenter, radiusLimit);
-            map.addSource('perimeter', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [circlePath] } } });
-            map.addLayer({ 'id': 'p-line', 'type': 'line', 'source': 'perimeter', 'paint': { 'line-color': '#2563eb', 'line-width': 4 } });
-            geolocate.trigger();
-        });
+            // ADD DOTTED LINE LAYER
+            map.addSource('route-line', {
+                'type': 'geojson',
+                'data': { 'type': 'FeatureCollection', 'features': [] }
+            });
 
-        geolocate.on('geolocate', (e) => {
-            const lat = e.coords.latitude; const lon = e.coords.longitude;
-            const R = 6371; 
-            const dLat = (lat - hillCenter[1]) * Math.PI / 180;
-            const dLon = (lon - hillCenter[0]) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(hillCenter[1] * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            let status = distance <= radiusLimit ? "In Jathara Premises" : "Outside Jathara Area";
-            if (distance <= radiusLimit) {
-                for (let id in sectorBoundaries) {
-                    let b = sectorBoundaries[id];
-                    if (lat <= b.n && lat >= b.s && lon >= b.w && lon <= b.e) { status = "Police Sector " + id; break; }
+            map.addLayer({
+                'id': 'dotted-line',
+                'type': 'line',
+                'source': 'route-line',
+                'paint': {
+                    'line-color': '#ff0000',
+                    'line-width': 3,
+                    'line-dasharray': [2, 2] // This creates the "dotted" effect
                 }
-            }
-            if (status !== currentStatus) {
-                currentStatus = status;
-                document.getElementById('sector-display').innerText = currentStatus;
-            }
-        });
+            });
 
-        window.addEventListener('offline', () => {
-            document.getElementById('sector-display').style.background = "#ff4444";
-            document.getElementById('sector-display').innerText = "OFFLINE - GPS TRACKING ONLY";
-        });
+            // ADD FIXED MARKERS
+            new maplibregl.Marker({ color: 'red' }).setLngLat(EXIT_COORDS).addTo(map);
+            new maplibregl.Marker({ color: 'yellow' }).setLngLat(JUNCTION_COORDS).addTo(map);
 
-        function shareLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const lat = pos.coords.latitude; const lon = pos.coords.longitude;
-                    const liveMapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-                    const message = `*Kotappakonda Jathara App*\nStatus: ${currentStatus}\nLive GPS: ${liveMapUrl}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-                });
-            }
-        }
+            // GEOLOCATION ENGINE
+            navigator.geolocation.watchPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                userMarker.setLngLat([longitude, latitude]);
+                document.getElementById('status').innerText = "In Jathara Premises";
+
+                // UPDATE DOTTED LINE TO EXIT
+                const routeData = {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [[longitude, latitude], EXIT_COORDS]
+                    }
+                };
+                map.getSource('route-line').setData(routeData);
+
+                // UPDATE DISTANCE DISPLAY
+                const dist = getDistance(latitude, longitude, EXIT_COORDS[1], EXIT_COORDS[0]);
+                document.getElementById('distance-info').innerText = `Distance to Exit: ${dist} km`;
+            }, null, { enableHighAccuracy: true });
+        });
     </script>
 </body>
 </html>
-
