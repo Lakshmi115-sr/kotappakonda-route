@@ -9,7 +9,6 @@
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background-color: #000; overflow: hidden; }
         
-        /* TERRIFIC UNIFORM TITLE DESIGN */
         .header {
             height: 80px;
             background-color: #000;
@@ -18,11 +17,12 @@
             justify-content: center;
             text-align: center;
         }
+        /* Medium Weight Telugu Title with Soft Glow */
         .terrific-title {
             color: #FFD700;
-            font-size: 28px;
-            font-weight: bold;
-            text-shadow: 0 0 15px #FFD700, 0 0 25px #FFA500, 0 0 5px #fff;
+            font-size: 26px;
+            font-weight: 500; /* Medium weight */
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); 
         }
 
         #map { position: absolute; top: 120px; bottom: 80px; width: 100%; border-top: 2px solid #FFD700; }
@@ -36,7 +36,6 @@
             font-weight: bold;
             color: #000;
             font-size: 15px;
-            padding: 0 10px;
         }
 
         .footer {
@@ -67,7 +66,7 @@
         <div class="terrific-title">శ్రీ త్రికోటేశ్వరస్వామి దీవెనలతో</div>
     </div>
     
-    <div class="status-bar" id="status-text">CENTER POINT TO EXIT POINT: CALCULATING...</div>
+    <div class="status-bar">CENTER POINT & OUT POINT LOCATIONS</div>
     
     <div id="map"></div>
 
@@ -76,65 +75,69 @@
     </div>
 
     <script>
-        // FIXED COORDINATES FROM FIELD RESEARCH
         const EXIT_POINT = [80.049340, 16.148340]; // Narasaraopet Exit
         const CENTER_POINT = [80.046062, 16.141687]; // Junction 42RQ+PMJ
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://demotiles.maplibre.org/style.json', // Your offline tiles
+            style: 'https://demotiles.maplibre.org/style.json', 
             center: CENTER_POINT,
-            zoom: 16
+            zoom: 16 
         });
 
-        // HAVERSINE MATH (STRICTLY FOR POINT-TO-POINT)
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; 
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return (R * c).toFixed(2);
-        }
+        // Function to create the Concept Circle
+        function createGeoJSONCircle(center, radiusInKm, points = 64) {
+            const coords = { latitude: center[1], longitude: center[0] };
+            const km = radiusInKm;
+            const ret = [];
+            const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
+            const distanceY = km / 110.574;
+
+            for (let i = 0; i < points; i++) {
+                const theta = (i / points) * (2 * Math.PI);
+                const x = distanceX * Math.cos(theta);
+                const y = distanceY * Math.sin(theta);
+                ret.push([coords.longitude + x, coords.latitude + y]);
+            }
+            ret.push(ret[0]);
+            return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ret] } };
+        };
 
         map.on('load', () => {
-            // FIXED MARKERS FOR CENTER AND EXIT
-            new maplibregl.Marker({ color: '#FFD700' }).setLngLat(CENTER_POINT).addTo(map); 
-            new maplibregl.Marker({ color: '#FF0000' }).setLngLat(EXIT_POINT).addTo(map);
-
-            // DOTTED LINE BETWEEN THE TWO FIXED COORDINATES
-            map.addSource('route-line', {
+            // 1. ADD THE CONCEPT CIRCLE around CENTER POINT
+            map.addSource('circleData', {
                 'type': 'geojson',
-                'data': {
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': [CENTER_POINT, EXIT_POINT]
-                    }
-                }
+                'data': createGeoJSONCircle(CENTER_POINT, 0.4) // 0.4km Concept Circle
             });
 
             map.addLayer({
-                'id': 'dotted-path',
-                'type': 'line',
-                'source': 'route-line',
-                'paint': {
-                    'line-color': '#FF0000',
-                    'line-width': 5,
-                    'line-dasharray': [2, 1]
-                }
+                'id': 'circle-fill',
+                'type': 'fill',
+                'source': 'circleData',
+                'paint': { 'fill-color': '#007bff', 'fill-opacity': 0.25 }
             });
 
-            // Calculate and Show Distance from Center to Exit
-            const fixedDist = getDistance(CENTER_POINT[1], CENTER_POINT[0], EXIT_POINT[1], EXIT_POINT[0]);
-            document.getElementById('status-text').innerText = `CENTER POINT TO EXIT POINT: ${fixedDist} KM`;
-            
-            // Auto-center view to show both points perfectly
-            const bounds = new maplibregl.LngLatBounds()
-                .extend(CENTER_POINT)
-                .extend(EXIT_POINT);
-            map.fitBounds(bounds, { padding: 50 });
+            // 2. MARKERS WITH POPUP LABELS
+            new maplibregl.Marker({ color: '#FFD700' })
+                .setLngLat(CENTER_POINT)
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<h3>Center Point</h3>'))
+                .addTo(map); 
+
+            new maplibregl.Marker({ color: '#FF0000' })
+                .setLngLat(EXIT_POINT)
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<h3>Out Point</h3>'))
+                .addTo(map);
+
+            // Open popups by default for the demo
+            const centerPopup = new maplibregl.Popup({ closeOnClick: false })
+                .setLngLat(CENTER_POINT)
+                .setHTML('<strong>Center Point</strong>')
+                .addTo(map);
+
+            const exitPopup = new maplibregl.Popup({ closeOnClick: false })
+                .setLngLat(EXIT_POINT)
+                .setHTML('<strong>Out Point</strong>')
+                .addTo(map);
         });
     </script>
 </body>
