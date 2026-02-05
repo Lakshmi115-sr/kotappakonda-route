@@ -2,42 +2,90 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Kotappakonda Thodu - Police Edition</title>
+    <title>Kotappakonda Thodu</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .info-box {
-            position: absolute; top: 10px; left: 10px; z-index: 1;
-            background: rgba(255, 255, 255, 0.9); padding: 10px;
-            border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        body { margin: 0; padding: 0; font-family: sans-serif; background-color: #000; }
+        #map { position: absolute; top: 100px; bottom: 80px; width: 100%; }
+        
+        /* Your Terrific Title Design */
+        .header {
+            height: 60px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .title-text {
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8), 0 0 5px #fff; /* Terrific Golden Glow */
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 40px;
+            background-color: #FFD700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Footer with WhatsApp Button */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            width: 80%;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
-    <div class="info-box" id="info">
-        <strong>Status:</strong> <span id="status">Locating...</span><br>
-        <span id="distance-info">Select a target on map</span>
+    <div class="header">
+        <div class="title-text">శ్రీ త్రికోటేశ్వరస్వామి దీవెనలతో</div>
     </div>
+    <div class="status-bar" id="status-text">LOCATING...</div>
+    
     <div id="map"></div>
 
+    <div class="footer">
+        <a href="#" class="whatsapp-btn">SHARE LOCATION ON WHATSAPP</a>
+    </div>
+
     <script>
-        // COORDINATES FROM YOUR FIELD RESEARCH
-        const EXIT_COORDS = [80.049340, 16.148340]; // Narasaraopet Exit
-        const JUNCTION_COORDS = [80.046062, 16.141687]; // Junction 42RQ+PMJ
+        // FIXED COORDINATES
+        const EXIT_LOC = [80.049340, 16.148340]; // Narasaraopet Exit
+        const JUNCTION_LOC = [80.046062, 16.141687]; // Junction 42RQ+PMJ
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://demotiles.maplibre.org/style.json', // Use your offline tiles URL here
-            center: JUNCTION_COORDS,
+            style: 'https://demotiles.maplibre.org/style.json', // Use your offline v-route tiles
+            center: JUNCTION_LOC,
             zoom: 15
         });
 
-        let userMarker = new maplibregl.Marker({ color: 'blue' }).setLngLat([0,0]).addTo(map);
-
-        // HAVERSINE FORMULA (Offline Distance Logic)
+        // OFFLINE DISTANCE MATH
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -48,47 +96,50 @@
             return (R * c).toFixed(2);
         }
 
+        let userMarker = new maplibregl.Marker({ color: '#007bff' }).setLngLat([0,0]).addTo(map);
+
         map.on('load', () => {
-            // ADD DOTTED LINE LAYER
+            // DOTTED LINE LAYER
             map.addSource('route-line', {
                 'type': 'geojson',
-                'data': { 'type': 'FeatureCollection', 'features': [] }
+                'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } }
             });
 
             map.addLayer({
-                'id': 'dotted-line',
+                'id': 'dotted-path',
                 'type': 'line',
                 'source': 'route-line',
                 'paint': {
-                    'line-color': '#ff0000',
-                    'line-width': 3,
-                    'line-dasharray': [2, 2] // This creates the "dotted" effect
+                    'line-color': '#FF0000',
+                    'line-width': 4,
+                    'line-dasharray': [2, 1]
                 }
             });
 
-            // ADD FIXED MARKERS
-            new maplibregl.Marker({ color: 'red' }).setLngLat(EXIT_COORDS).addTo(map);
-            new maplibregl.Marker({ color: 'yellow' }).setLngLat(JUNCTION_COORDS).addTo(map);
+            // FIXED MARKERS
+            new maplibregl.Marker({ color: '#FF0000' }).setLngLat(EXIT_LOC).addTo(map); 
+            new maplibregl.Marker({ color: '#FFD700' }).setLngLat(JUNCTION_LOC).addTo(map);
 
-            // GEOLOCATION ENGINE
             navigator.geolocation.watchPosition((pos) => {
                 const { latitude, longitude } = pos.coords;
                 userMarker.setLngLat([longitude, latitude]);
-                document.getElementById('status').innerText = "In Jathara Premises";
 
-                // UPDATE DOTTED LINE TO EXIT
-                const routeData = {
+                // Update Line to Exit
+                map.getSource('route-line').setData({
                     'type': 'Feature',
                     'geometry': {
                         'type': 'LineString',
-                        'coordinates': [[longitude, latitude], EXIT_COORDS]
+                        'coordinates': [[longitude, latitude], EXIT_LOC]
                     }
-                };
-                map.getSource('route-line').setData(routeData);
+                });
 
-                // UPDATE DISTANCE DISPLAY
-                const dist = getDistance(latitude, longitude, EXIT_COORDS[1], EXIT_COORDS[0]);
-                document.getElementById('distance-info').innerText = `Distance to Exit: ${dist} km`;
+                const dist = getDistance(latitude, longitude, EXIT_LOC[1], EXIT_LOC[0]);
+                document.getElementById('status-text').innerText = `IN JATHARA PREMISES - ${dist} KM TO EXIT`;
+
+                // AUTO-FIT
+                const bounds = new maplibregl.LngLatBounds().extend([longitude, latitude]).extend(EXIT_LOC);
+                map.fitBounds(bounds, { padding: 50 });
+
             }, null, { enableHighAccuracy: true });
         });
     </script>
