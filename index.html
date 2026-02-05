@@ -7,26 +7,33 @@
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background-color: #000; }
-        #map { position: absolute; top: 100px; bottom: 80px; width: 100%; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background-color: #000; overflow: hidden; }
         
-        /* Your Terrific Title Design */
+        /* THE TERRIFIC TITLE DESIGN */
         .header {
-            height: 60px;
+            height: 70px;
             background-color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
         }
-        .title-text {
+        .sree-text {
             color: #FFD700;
-            font-size: 24px;
+            font-size: 42px; /* Extra large for "Sree" */
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8), 0 0 5px #fff; /* Terrific Golden Glow */
+            margin-right: 10px;
+            text-shadow: 0 0 20px #FFD700, 0 0 30px #FFA500; /* Deep Golden Glow */
+        }
+        .main-title {
+            color: #FFD700;
+            font-size: 26px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
         }
 
-        /* Status Bar */
+        #map { position: absolute; top: 110px; bottom: 80px; width: 100%; }
+
         .status-bar {
             height: 40px;
             background-color: #FFD700;
@@ -34,10 +41,9 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            text-transform: uppercase;
+            color: #000;
         }
 
-        /* Footer with WhatsApp Button */
         .footer {
             position: absolute;
             bottom: 0;
@@ -51,7 +57,7 @@
         .whatsapp-btn {
             background-color: #25D366;
             color: white;
-            width: 80%;
+            width: 90%;
             padding: 15px;
             border-radius: 10px;
             text-align: center;
@@ -63,8 +69,10 @@
 </head>
 <body>
     <div class="header">
-        <div class="title-text">శ్రీ త్రికోటేశ్వరస్వామి దీవెనలతో</div>
+        <span class="sree-text">శ్రీ</span>
+        <span class="main-title">త్రికోటేశ్వరస్వామి దీవెనలతో</span>
     </div>
+    
     <div class="status-bar" id="status-text">LOCATING...</div>
     
     <div id="map"></div>
