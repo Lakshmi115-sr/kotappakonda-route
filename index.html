@@ -9,6 +9,7 @@
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background-color: #000; overflow: hidden; }
         
+        /* TERRIFIC UNIFORM TITLE DESIGN */
         .header {
             height: 80px;
             background-color: #000;
@@ -34,7 +35,8 @@
             justify-content: center;
             font-weight: bold;
             color: #000;
-            font-size: 16px;
+            font-size: 15px;
+            padding: 0 10px;
         }
 
         .footer {
@@ -65,7 +67,7 @@
         <div class="terrific-title">శ్రీ త్రికోటేశ్వరస్వామి దీవెనలతో</div>
     </div>
     
-    <div class="status-bar" id="status-text">WAITING FOR GPS...</div>
+    <div class="status-bar" id="status-text">CENTER POINT TO EXIT POINT: CALCULATING...</div>
     
     <div id="map"></div>
 
@@ -74,16 +76,18 @@
     </div>
 
     <script>
-        const EXIT_LOC = [80.049340, 16.148340]; // Narasaraopet Exit
-        const JUNCTION_LOC = [80.046062, 16.141687]; // Junction Center
+        // FIXED COORDINATES FROM FIELD RESEARCH
+        const EXIT_POINT = [80.049340, 16.148340]; // Narasaraopet Exit
+        const CENTER_POINT = [80.046062, 16.141687]; // Junction 42RQ+PMJ
 
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://demotiles.maplibre.org/style.json', // Your offline tiles
-            center: JUNCTION_LOC,
+            center: CENTER_POINT,
             zoom: 16
         });
 
+        // HAVERSINE MATH (STRICTLY FOR POINT-TO-POINT)
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -94,52 +98,43 @@
             return (R * c).toFixed(2);
         }
 
-        let userMarker = new maplibregl.Marker({ color: '#007bff' }).setLngLat(JUNCTION_LOC).addTo(map);
-
         map.on('load', () => {
-            new maplibregl.Marker({ color: '#FF0000' }).setLngLat(EXIT_LOC).addTo(map);
+            // FIXED MARKERS FOR CENTER AND EXIT
+            new maplibregl.Marker({ color: '#FFD700' }).setLngLat(CENTER_POINT).addTo(map); 
+            new maplibregl.Marker({ color: '#FF0000' }).setLngLat(EXIT_POINT).addTo(map);
 
+            // DOTTED LINE BETWEEN THE TWO FIXED COORDINATES
             map.addSource('route-line', {
                 'type': 'geojson',
-                'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [JUNCTION_LOC, EXIT_LOC] } }
+                'data': {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [CENTER_POINT, EXIT_POINT]
+                    }
+                }
             });
 
             map.addLayer({
                 'id': 'dotted-path',
                 'type': 'line',
                 'source': 'route-line',
-                'paint': { 'line-color': '#FF0000', 'line-width': 5, 'line-dasharray': [2, 1] }
+                'paint': {
+                    'line-color': '#FF0000',
+                    'line-width': 5,
+                    'line-dasharray': [2, 1]
+                }
             });
 
-            // REAL-TIME GPS TRACKER
-            navigator.geolocation.watchPosition((pos) => {
-                const { latitude, longitude } = pos.coords;
-                
-                // Update User Marker to Real Position
-                userMarker.setLngLat([longitude, latitude]);
-
-                // Update Dotted Line
-                map.getSource('route-line').setData({
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': [[longitude, latitude], EXIT_LOC]
-                    }
-                });
-
-                // Update Distance Text
-                const dist = getDistance(latitude, longitude, EXIT_LOC[1], EXIT_LOC[0]);
-                document.getElementById('status-text').innerText = `IN JATHARA PREMISES - ${dist} KM TO EXIT`;
-
-                // Auto-center map on User
-                map.easeTo({ center: [longitude, latitude] });
-
-            }, (err) => {
-                // If GPS fails, keep showing Demo Junction
-                console.log("Using Demo Location");
-                const dist = getDistance(JUNCTION_LOC[1], JUNCTION_LOC[0], EXIT_LOC[1], EXIT_LOC[0]);
-                document.getElementById('status-text').innerText = `DEMO MODE - ${dist} KM TO EXIT`;
-            }, { enableHighAccuracy: true });
+            // Calculate and Show Distance from Center to Exit
+            const fixedDist = getDistance(CENTER_POINT[1], CENTER_POINT[0], EXIT_POINT[1], EXIT_POINT[0]);
+            document.getElementById('status-text').innerText = `CENTER POINT TO EXIT POINT: ${fixedDist} KM`;
+            
+            // Auto-center view to show both points perfectly
+            const bounds = new maplibregl.LngLatBounds()
+                .extend(CENTER_POINT)
+                .extend(EXIT_POINT);
+            map.fitBounds(bounds, { padding: 50 });
         });
     </script>
 </body>
